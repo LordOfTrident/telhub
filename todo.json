@@ -1,0 +1,146 @@
+[
+	{
+		"type": "group",
+		"title": "Channels",
+		"children": [
+			{
+				"type": "task",
+				"title": "Joining/creating channels",
+				"desc": null,
+				"done": true
+			},
+			{
+				"type": "task",
+				"title": "Searching a text snippet in channel messages",
+				"desc": null,
+				"done": true
+			},
+			{
+				"type": "task",
+				"title": "Filter find messages (by time/date, by author...)",
+				"desc": null,
+				"done": false
+			},
+			{
+				"type": "task",
+				"title": "Optional password protection",
+				"desc": null,
+				"done": false
+			},
+			{
+				"type": "group",
+				"title": "Channel admin role",
+				"children": [
+					{
+						"type": "task",
+						"title": "Deleting messages (replace with a \"Deleted message\" text) ",
+						"desc": null,
+						"done": false
+					},
+					{
+						"type": "task",
+						"title": "Muting/banning users from channel",
+						"desc": null,
+						"done": false
+					},
+					{
+						"type": "task",
+						"title": "Delete/rename channel",
+						"desc": null,
+						"done": false
+					},
+					{
+						"type": "task",
+						"title": "Managing channel password",
+						"desc": null,
+						"done": false
+					}
+				]
+			},
+			{
+				"type": "task",
+				"title": "Basic channels with a list of messages",
+				"desc": null,
+				"done": true
+			}
+		]
+	},
+	{
+		"type": "group",
+		"title": "Users",
+		"children": [
+			{
+				"type": "task",
+				"title": "Basic no password one-time users",
+				"desc": null,
+				"done": true
+			},
+			{
+				"type": "task",
+				"title": "Limit the characters allowed in a username",
+				"desc": null,
+				"done": false
+			},
+			{
+				"type": "task",
+				"title": "Account system with hashed passwords",
+				"desc": null,
+				"done": false
+			}
+		]
+	},
+	{
+		"type": "group",
+		"title": "Messages",
+		"children": [
+			{
+				"type": "task",
+				"title": "Markdown",
+				"desc": null,
+				"done": false
+			},
+			{
+				"type": "task",
+				"title": "Save time and date",
+				"desc": null,
+				"done": false
+			},
+			{
+				"type": "task",
+				"title": "Message scanning (automatically show when recieved)",
+				"desc": null,
+				"done": true
+			}
+		]
+	},
+	{
+		"type": "group",
+		"title": "Server",
+		"children": [
+			{
+				"type": "group",
+				"title": "Saving data to a local database",
+				"children": [
+					{
+						"type": "task",
+						"title": "Account data",
+						"desc": null,
+						"done": false
+					},
+					{
+						"type": "task",
+						"title": "Channel data",
+						"desc": null,
+						"done": false
+					}
+				]
+			},
+			{
+				"type": "task",
+				"title": "Optional password protection",
+				"desc": null,
+				"done": true
+			}
+		]
+	}
+]
