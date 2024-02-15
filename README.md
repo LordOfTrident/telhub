@@ -64,9 +64,10 @@ $ cd telhub
 $ mix run --no-halt -- [PORT] [PASSWORD]
 ```
 
+`[PASSWORD]` is an optional server password.
+
 > [!NOTE]\
 > If you dont know what to pick for `[PORT]`, you can omit it. Default is `4040`.
-> `[PASSWORD]` is an optional server password.
 
 ### Client
 ```sh
