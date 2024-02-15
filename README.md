@@ -16,7 +16,7 @@
 		<img alt="Pull requests" src="https://img.shields.io/github/issues-pr/LordOfTrident/telhub?style=for-the-badge&color=4f79e4">
 	</a>
 	<br><br><br>
-	<img src="./res/logo.png" width="350px">
+	<img src="./res/logo-dark.png" width="350px">
 	<h1 align="center">Telhub</h1>
 	<p align="center">💬 A telnet chat server in Elixir 🧪</p>
 	<p align="center">
