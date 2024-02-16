@@ -16,6 +16,7 @@ defmodule Telhub do
 			children = [
 				{Telhub.Users,    []},
 				{Telhub.Channels, []},
+				{Telhub.BanList,  []},
 				{Telhub.Server,   %{port: port, pass: pass}},
 			]
 			Supervisor.start_link(children, opts)

@@ -5,6 +5,9 @@ defmodule Telhub.ClientHandler do
 	alias Telhub.Users
 	alias Telhub.Channels
 	alias Telhub.CLI
+	alias Telhub.BanList
+
+	@password_retries 5
 
 	@cmd_prefix "/"
 
@@ -56,21 +59,38 @@ Commands:
 		"#{IO.ANSI.blue <> IO.ANSI.bright <> cmd <> IO.ANSI.reset <> args} - #{desc}\n"
 	end
 
+	defp prompt_password(_, nil, _), do:
+		:ok
+
+	defp prompt_password(socket, _, 0) do
+		BanList.add(socket |> socket_ip)
+
+		CLI.error("You ran out of password retries.") |> CLI.send(socket)
+		:gen_tcp.close(socket)
+		:closed
+	end
+
+	defp prompt_password(socket, pass, retries) do
+		CLI.prompt("(#{retries}) Enter the server password") |> CLI.send(socket)
+		case read_line(socket) do
+			:closed -> :closed
+			input   ->
+				if input == pass do
+					:ok
+				else
+					CLI.error("Incorrect password") |> CLI.send(socket)
+					prompt_password(socket, pass, retries - 1)
+				end
+		end
+	end
+
 	defp prompt_password(socket, pass) do
-		if pass != nil do
-			CLI.prompt("Enter the server password") |> CLI.send(socket)
-			case read_line(socket) do
-				:closed -> :closed
-				input   ->
-					if input == pass do
-						:ok
-					else
-						CLI.error("Incorrect password") |> CLI.send(socket)
-						prompt_password(socket, pass)
-					end
-			end
+		if BanList.get(socket |> socket_ip) == :banned do
+			CLI.error("You have been banned from the server.") |> CLI.send(socket)
+			:gen_tcp.close(socket)
+			:closed
 		else
-			:ok
+			prompt_password(socket, pass, @password_retries)
 		end
 	end
 
@@ -117,11 +137,21 @@ Commands:
 		end
 	end
 
+	defp valid_username?(username), do:
+		Regex.match?(~r/^[a-zA-Z0-9\-_\.]*$/, username)
+
 	defp prompt_registration(socket) do
 		CLI.prompt("Enter your username") |> CLI.send(socket)
 		case read_line(socket) do
-			:closed -> :closed
-			input   -> Users.add(input |> String.trim, socket)
+			:closed  -> :closed
+			username ->
+				if valid_username?(username) do
+					Users.add(username, socket)
+				else
+					CLI.error("Usernames can only contain letters, digits, \"-\", \"_\" or \".\". ")
+					|> CLI.send(socket)
+					prompt_registration(socket)
+				end
 		end
 	end
 

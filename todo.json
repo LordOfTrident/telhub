@@ -79,7 +79,7 @@
 				"type": "task",
 				"title": "Limit the characters allowed in a username",
 				"desc": null,
-				"done": false
+				"done": true
 			},
 			{
 				"type": "task",
@@ -138,6 +138,12 @@
 			{
 				"type": "task",
 				"title": "Optional password protection",
+				"desc": null,
+				"done": true
+			},
+			{
+				"type": "task",
+				"title": "Max amount of password retries, IP ban when you run out of them",
 				"desc": null,
 				"done": true
 			}
