@@ -7,7 +7,8 @@ defmodule Telhub.ClientHandler do
 	alias Telhub.CLI
 	alias Telhub.BanList
 
-	@password_retries 5
+	@password_retries    5
+	@max_username_length 20
 
 	@cmd_prefix "/"
 
@@ -56,7 +57,7 @@ Commands:
 			|> Enum.map(&(" " <> IO.ANSI.magenta <> IO.ANSI.bright <> &1 <> IO.ANSI.reset))
 			|> Enum.join("")
 
-		"#{IO.ANSI.blue <> IO.ANSI.bright <> cmd <> IO.ANSI.reset <> args} - #{desc}\n"
+		"#{@cmd_prefix <> IO.ANSI.blue <> IO.ANSI.bright <> cmd <> IO.ANSI.reset <> args} - #{desc}\n"
 	end
 
 	defp prompt_password(_, nil, _), do:
@@ -138,7 +139,8 @@ Commands:
 	end
 
 	defp valid_username?(username), do:
-		Regex.match?(~r/^[a-zA-Z0-9\-_\.]*$/, username)
+		Regex.match?(~r/^[a-zA-Z0-9\-_\.]+$/, username) and
+		String.length(username) <= @max_username_length
 
 	defp prompt_registration(socket) do
 		CLI.prompt("Enter your username") |> CLI.send(socket)
@@ -148,7 +150,8 @@ Commands:
 				if valid_username?(username) do
 					Users.add(username, socket)
 				else
-					CLI.error("Usernames can only contain letters, digits, \"-\", \"_\" or \".\". ")
+					CLI.error("Usernames can be max #{@max_username_length} characters long and " <>
+					          "can only contain letters, digits, \"-\", \"_\" or \".\". ")
 					|> CLI.send(socket)
 					prompt_registration(socket)
 				end
@@ -196,6 +199,9 @@ Commands:
 
 	defp process(@cmd_prefix <> rest, user), do:
 		rest |> String.split(" ") |> process_cmd(user)
+
+	defp process("", user), do:
+		nil # IO.ANSI.cursor_up <> "\r" |> CLI.send(user.socket)
 
 	defp process(msg, user), do:
 		user |> User.send(msg)
