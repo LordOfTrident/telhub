@@ -200,7 +200,7 @@ Commands:
 	defp process(@cmd_prefix <> rest, user), do:
 		rest |> String.split(" ") |> process_cmd(user)
 
-	defp process("", user), do:
+	defp process("", _user), do:
 		nil # IO.ANSI.cursor_up <> "\r" |> CLI.send(user.socket)
 
 	defp process(msg, user), do:
