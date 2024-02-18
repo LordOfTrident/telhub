@@ -165,6 +165,10 @@ Commands:
 
 		input = read_line(user.socket)
 		cond do
+			input == :error ->
+				CLI.error("Recieved an error during input") |> CLI.send(user.socket)
+				serve(Users.get(user.name))
+
 			input == :closed -> closed(user)
 
 			input |> String.printable? ->
@@ -183,6 +187,7 @@ Commands:
 		case :gen_tcp.recv(socket, 0) do
 			{:ok,     data}      -> data |> String.trim
 			{:error,  :closed}   -> :closed
+			{:error,  _}         -> :error
 		end
 	end
 
