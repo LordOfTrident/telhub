@@ -18,20 +18,22 @@ defmodule Telhub.ClientHandler do
 	@cmd_scan   "scan"
 	@cmd_latest "latest"
 	@cmd_search "search"
+	@cmd_filter "filter"
 	@cmd_clear  "clear"
 	@cmd_exit   "exit"
 	@cmd_help   "help"
 
 	@cmds %{
-		@cmd_users  => {[],                 "List all connected users"},
-		@cmd_join   => {["<channel_name>"], "Join the specified channel"},
-		@cmd_msgs   => {[],                 "Show all messages in the channel"},
-		@cmd_scan   => {["<on/off>"],       "Enable/disable automatic new message recieving"},
-		@cmd_latest => {[],                 "Flush and send all latest notifications"},
-		@cmd_search => {["text"],           "Search for messages containing the text snippet"},
-		@cmd_clear  => {[],                 "Clear the screen"},
-		@cmd_exit   => {[],                 "Exit the chat"},
-		@cmd_help   => {["[command]"],      "Show the help message or a specific command usage"},
+		@cmd_users  => {[],                   "List all connected users"},
+		@cmd_join   => {["<channel_name>"],   "Join the specified channel"},
+		@cmd_msgs   => {[],                   "Show all messages in the channel"},
+		@cmd_scan   => {["<on/off>"],         "Enable/disable automatic new message recieving"},
+		@cmd_latest => {[],                   "Flush and send all latest notifications"},
+		@cmd_search => {["<text>", "[user]"], "Search for messages containing the text snippet"},
+		@cmd_filter => {["<user>"],           "Filter messages by user"},
+		@cmd_clear  => {[],                   "Clear the screen"},
+		@cmd_exit   => {[],                   "Exit the chat"},
+		@cmd_help   => {["[command]"],        "Show the help message or a specific command usage"},
 	}
 
 	def new_client(socket, pass) do
@@ -57,7 +59,8 @@ Commands:
 			|> Enum.map(&(" " <> IO.ANSI.magenta <> IO.ANSI.bright <> &1 <> IO.ANSI.reset))
 			|> Enum.join("")
 
-		"#{@cmd_prefix <> IO.ANSI.blue <> IO.ANSI.bright <> cmd <> IO.ANSI.reset <> args} - #{desc}\n"
+		IO.ANSI.blue <> @cmd_prefix <> IO.ANSI.bright <> cmd <>
+		IO.ANSI.reset <> args <> " - #{desc}\n"
 	end
 
 	defp prompt_password(_, nil, _), do:
@@ -200,11 +203,15 @@ Commands:
 	defp process(@cmd_prefix <> rest, user), do:
 		rest |> String.split(" ") |> process_cmd(user)
 
-	defp process("", _user), do:
-		nil # IO.ANSI.cursor_up <> "\r" |> CLI.send(user.socket)
+	defp process("", user), do:
+		IO.ANSI.cursor_up <> "\r" |> CLI.send(user.socket)
 
-	defp process(msg, user), do:
+	defp process(msg, user) do
+		CLI.apply_markdown_to_input(msg, user.channel_name, user.name, user.color)
+		|> CLI.send(user.socket)
+
 		user |> User.send(msg)
+	end
 
 	defp process_cmd([@cmd_users], user) do
 		Users.all
@@ -228,7 +235,7 @@ Commands:
 	defp process_cmd([@cmd_msgs], user) do
 		Channels.get(user.channel_name).msgs
 		|> Enum.map(fn msg ->
-			CLI.user_message(user.channel_name, msg.author, msg.color, msg.content)
+			CLI.user_message(user.channel_name, msg.author, msg.color, msg.content, :md)
 		end)
 		|> Enum.join("")
 		|> CLI.send(user.socket)
@@ -241,30 +248,27 @@ Commands:
 		Users.set_scan(user.name, bool)
 	end
 
-	defp process_cmd([@cmd_latest], user) do
+	defp process_cmd([@cmd_latest], user), do:
 		Users.flush_notifs(user.name)
-	end
 
-	defp process_cmd([@cmd_search, text], user) do
+	defp process_cmd([@cmd_search, text], user), do:
+		search_and_send(user, text)
+
+	defp process_cmd([@cmd_search, text, author], user), do:
+		search_and_send(user, text, fn msg -> msg.author == author end)
+
+	defp process_cmd([@cmd_filter, author], user) do
 		Channels.get(user.channel_name).msgs
-		|> Enum.filter(fn msg -> String.contains?(msg.content, text) end)
+		|> Enum.filter(fn msg -> msg.author == author end)
 		|> Enum.map(fn msg ->
-			{idx, len} = :binary.match(msg.content, text)
-
-			content =
-				(msg.content |> String.slice(0, idx)) <>
-				CLI.highlight(msg.content |> String.slice(idx, len)) <>
-				(msg.content |> String.slice(idx + len, String.length(msg.content)))
-
-			CLI.user_message(user.channel_name, msg.author, msg.color, content)
+			CLI.user_message(user.channel_name, msg.author, msg.color, msg.content, :md)
 		end)
 		|> Enum.join("")
 		|> CLI.send(user.socket)
 	end
 
-	defp process_cmd([@cmd_clear], user) do
+	defp process_cmd([@cmd_clear], user), do:
 		IO.ANSI.clear <> IO.ANSI.cursor(1, 1) |> CLI.send(user.socket)
-	end
 
 	defp process_cmd([@cmd_exit], user) do
 		CLI.success("Exited.") |> CLI.send(user.socket)
@@ -279,9 +283,8 @@ Commands:
 		:closed
 	end
 
-	defp process_cmd([@cmd_help], user) do
+	defp process_cmd([@cmd_help], user), do:
 		help() |> CLI.send(user.socket)
-	end
 
 	defp process_cmd([@cmd_help, cmd], user) do
 		if @cmds[cmd] == nil do
@@ -304,6 +307,20 @@ Commands:
 			true -> "Unknown command #{cmd}"
 		end
 		|> CLI.error |> CLI.send(user.socket)
+	end
+
+	defp search_and_send(user, text), do:
+		search_and_send(user, text, fn _ -> true end)
+
+	defp search_and_send(user, text, extra_filter) do
+		Channels.get(user.channel_name).msgs
+		|> Enum.filter(fn msg -> String.contains?(msg.content, text) and extra_filter.(msg) end)
+		|> Enum.map(fn msg ->
+			CLI.user_message(user.channel_name, msg.author, msg.color,
+			                 CLI.highlight_snippet(msg.content, text), :no_md)
+		end)
+		|> Enum.join("")
+		|> CLI.send(user.socket)
 	end
 
 	def socket_ip(socket) do

@@ -19,7 +19,7 @@
 				"type": "task",
 				"title": "Filter find messages (by time/date, by author...)",
 				"desc": null,
-				"done": false
+				"done": true
 			},
 			{
 				"type": "task",
@@ -97,7 +97,7 @@
 				"type": "task",
 				"title": "Markdown",
 				"desc": null,
-				"done": false
+				"done": true
 			},
 			{
 				"type": "task",

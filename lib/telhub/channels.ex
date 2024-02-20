@@ -18,7 +18,7 @@ defmodule Telhub.Channel do
 		|> Users.not_user(author)
 		|> Users.in_channel(channel.name)
 		|> Enum.each(fn {name, _} ->
-			Users.send_notif(name, CLI.user_message(channel.name, author, color, content))
+			Users.send_notif(name, CLI.user_message(channel.name, author, color, content, :md))
 		end)
 
 		%Channel{channel | msgs: channel.msgs ++ [msg]}
