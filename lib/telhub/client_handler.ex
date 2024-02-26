@@ -78,6 +78,7 @@ Commands:
 		CLI.prompt("(#{retries}) Enter the server password") |> CLI.send(socket)
 		case read_line(socket) do
 			:closed -> :closed
+			:error  -> :error
 			input   ->
 				if input == pass do
 					:ok
@@ -107,8 +108,8 @@ Commands:
 				CLI.send("\n#{IO.ANSI.bright}Welcome to Telhub!#{IO.ANSI.reset}\n", socket)
 				create_new_user(socket)
 
-			:closed ->
-				Logger.info("Connection from #{ip} cancelled")
+			:closed -> Logger.info("Connection from #{ip} cancelled")
+			:error  -> Logger.info("Error from #{ip}")
 		end
 	end
 
@@ -124,6 +125,7 @@ Commands:
 				create_new_user(socket)
 
 			:closed -> Logger.info("Connection from #{ip} closed at registration")
+			:errpr  -> Logger.info("Error from #{ip} at registration")
 
 			user ->
 				Logger.info("Registered user \"#{user.name}\" from #{ip}")
@@ -149,6 +151,7 @@ Commands:
 		CLI.prompt("Enter your username") |> CLI.send(socket)
 		case read_line(socket) do
 			:closed  -> :closed
+			:error   -> :error
 			username ->
 				if valid_username?(username) do
 					Users.add(username, socket)
